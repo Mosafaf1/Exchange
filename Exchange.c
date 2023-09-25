@@ -1,50 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <stdbool.h>
 #include <time.h>
 #include <colors.h>
-// #include <mysql/mysql.h>
+#include <signal.h>
 #define namesize 10
-int shop(int dollar, int erue, int toman);
+int shop(int dollar, int euro, int toman);
 void warning();
 void member();
-int menu(int dollar, int erue, int toman);
-void admin();
-int Dollar(int dollar, int erue, int toman);
-int Erue(int dollar, int erue, int toman);
-int Toman(int dollar, int erue, int toman);
+int menu(int dollar, int euro, int toman);
+int Dollar(int dollar, int euro, int toman);
+int Euro(int dollar, int euro, int toman);
+int Toman(int dollar, int euro, int toman);
 void delay(int number_of_seconds);
 int error(int error_number);
+void welcome();
 char licnes[100][100];
 int c = 0;
+int f_dollar;
+int f_euro;
+int f_toman;
 bool register_check;
-// char welcome[35] = {'h', 'e', 'l', 'l', 'o', 'a', 'n', 'd', 'w', 'e', 'l', 'c', 'o', 'm', 'e', 't', 'o', 't', 'h', 'e', 'e', 'x', 'c', 'h', 'a', 'n', 'g', 'e', '\0'};
-// user = fopen("username.txt", "r");
-int main(char username, int password)
+char username[namesize];
+void handle(int signo);
+void bye(int dollar, int euro, int toman);
+
+int main(int argc, char **argv)
 {
-    printf(BBLU "hello and welcome to the exchange\n\n");
-    fflush(stdout);
-    printf(__DATE__);
-    printf("\n" reset);
-    fflush(stdout);
+    signal(SIGINT, handle);
+    signal(SIGQUIT, handle);
+    signal(SIGTERM, handle);
+    signal(SIGTSTP, handle);
+    welcome();
     for (;;)
     {
         menu(0, 0, 500);
     }
     return 0;
 }
-int menu(int dollar, int erue, int toman)
+int menu(int dollar, int euro, int toman)
 {
     // bool register_check;
-    char username[namesize];
     int pass;
     int verify;
     int verify_pass;
-    char verify_username[namesize];
     int select;
     int i = 0;
+    char fermet[20];
     printf(BYEL "\n(1)shop\n");
     printf("(2)register\n");
     printf("(3)about\n");
@@ -54,27 +57,26 @@ int menu(int dollar, int erue, int toman)
     getchar();
     if (select == 4)
     {
-        printf(CYN "good bye\n" reset);
-        fflush(stdout);
-        // remove("username.txt");
-        exit(0);
+        bye(dollar, euro, toman);
     }
+
     else if (select == 2)
     {
         if (register_check == true)
         {
             printf(REDB "you was registered" reset);
             printf("\n");
+            fflush(stdout);
             return 0;
         }
-        printf(MAG "creat an acount\n");
+        printf(MAG "create an account\n");
         printf("enter your username : ");
         fflush(stdout);
         fgets(username, namesize, stdin);
         if (strlen(username) < 4)
         {
             error(406);
-            return menu(dollar, erue, toman);
+            return menu(dollar, euro, toman);
         }
         printf("\nyour username is = %s\n", username);
         printf("Enter your password : ");
@@ -93,18 +95,18 @@ int menu(int dollar, int erue, int toman)
         if (verify != pass)
         {
             error(400);
+            return 0;
         }
         else if (verify == pass)
         {
             register_check = true;
         }
-        printf(GRN "register success\n" reset);
-        // printf("%d", register_check);
+        printf(GRN "Registration was successful\n" reset);
         fflush(stdout);
     }
     else if (select == 1 && register_check == true)
     {
-        shop(dollar, erue, toman);
+        shop(dollar, euro, toman);
     }
     else if (select == 1 && register_check != true)
     {
@@ -113,86 +115,100 @@ int menu(int dollar, int erue, int toman)
     }
     else if (select == 3)
     {
+        system("clear");
         FILE *readme;
-        readme = fopen("readme.md", "r");
+        readme = fopen("README.md", "r");
+        if (readme == NULL)
+        {
+            error(503);
+            bye(dollar, euro, toman);
+        }
         while (feof(readme) == 0)
         {
             fgets(licnes[i], 256, readme);
             printf(CYN "%s" reset, licnes[i]);
+            fflush(stdout);
             i++;
         }
+        fclose(readme);
     }
     else
     {
-        exit(0);
+        bye(dollar, euro, toman);
     }
 }
-int shop(int dollar, int erue, int toman)
+int shop(int dollar, int euro, int toman)
 {
     int option;
-    // system("clear");
-    printf(BYEL "            ***______welcome to shop______***\n\n" reset);
+    int num1 = 3;
+    int num2 = 2;
+    f_dollar = dollar;
+    f_euro = euro;
+    f_toman = toman;
+    system("clear");
+    printf(BYEL "            ***______Welcome to shop______***\n\n" reset);
     printf(GRN "your dollar is %d\n", dollar);
-    printf("your erue is %d\n", erue);
+    printf("your euro is %d\n", euro);
     printf("your tomsn is %d\n" reset, toman);
-    printf(BYEL "(1)Conversions dollar\n");
-    printf("(2)Conversions euro\n");
-    printf("(3)Conversions toman\n");
-    printf("(4)go back\n" reset);
+    printf(BYEL "(1)dollar conversions\n");
+    printf("(2)euro conversions\n");
+    printf("(3)Toman conversions\n");
+    printf("(4)Go back\n" reset);
     fflush(stdout);
     scanf("%2d", &option);
     if (option == 4)
     {
-        return menu(dollar, erue, toman);
+        return menu(dollar, euro, toman);
     }
     else if (option == 1)
     {
-        Dollar(dollar, erue, toman);
+        Dollar(dollar, euro, toman);
     }
     else if (option == 3)
     {
-        Toman(dollar, erue, toman);
+        Toman(dollar, euro, toman);
     }
     else if (option == 2)
     {
-        Erue(dollar, erue, toman);
+        Euro(dollar, euro, toman);
     }
     else
     {
-        return menu(dollar, erue, toman);
+        return menu(dollar, euro, toman);
     }
-    return shop(dollar, erue, toman);
+    return shop(dollar, euro, toman);
 }
-int Toman(int dollar, int erue, int toman)
+int Toman(int dollar, int euro, int toman)
 {
     int option3;
     int dollar_value;
-    int erue_value;
+    int euro_value;
     int dollar_point = 50;
-    int erue_point = 60;
+    int euro_point = 60;
     int check_t_1 = toman / dollar_point;
-    int check_t_2 = toman / erue_point;
+    int check_t_2 = toman / euro_point;
     system("clear");
     // delay(2000);
     if (toman <= 0)
     {
         error(403);
-        return shop(dollar, erue, toman);
+        delay(2000);
+        return shop(dollar, euro, toman);
     }
     printf(GRN "your dollar is %d\n", dollar);
-    printf("your erue is %d\n", erue);
+    printf("your euro is %d\n", euro);
     printf("your tomsn is %d\n" reset, toman);
-    printf(BYEL "\n          <<<<<<<the conversions for toman >>>>>>> :\n");
+    printf(BYEL "\n          <<<<<<<Toman>>>>>>> :\n");
     fflush(stdout);
     // printf(__DATE__);
     printf("(1)toman to dollar\n");
-    printf("(2)tomn to erue\n");
+    printf("(2)tomn to euro\n");
     printf("(3)go back\n" reset);
     fflush(stdout);
     scanf("%2d", &option3);
     if (option3 == 3)
     {
-        return shop(dollar, erue, toman);
+        return shop(dollar, euro, toman);
     }
     else if (option3 == 1)
     {
@@ -204,91 +220,97 @@ int Toman(int dollar, int erue, int toman)
         {
             error(404);
             delay(2000);
-            return Toman(dollar, erue, toman);
+            return Toman(dollar, euro, toman);
         }
         else if (toman < 0)
         {
             error(405);
             delay(2000);
-            return Toman(dollar, erue, toman);
+            return Toman(dollar, euro, toman);
         }
         else if (dollar_value > check_t_1)
         {
             error(500);
             delay(2000);
-            return Toman(dollar, erue, toman);
+            return Toman(dollar, euro, toman);
         }
         dollar = dollar + dollar_value;
         dollar_value = dollar_value * dollar_point;
         toman = toman - dollar_value;
-        printf(BGRN "convert success\n" reset);
+        printf(BGRN "convert was successfully\n" reset);
         fflush(stdout);
         delay(2000);
 
         // printf(GRN "your dollar is %d\n", dollar);
-        // printf("your erue is %d\n", erue);
+        // printf("your euro is %d\n", euro);
         // printf("your tomsn is %d\n" reset, toman);
     }
     else if (option3 == 2)
     {
-        printf(CYN "ok once erue is %d toman\n", erue_point);
-        printf("enter your erue to want : " reset);
+        printf(CYN "ok once euro is %d toman\n", euro_point);
+        printf("enter your euro to want : " reset);
         fflush(stdout);
-        scanf("%3d", &erue_value);
-        if (erue_value <= 0 | erue_value > 500)
+        scanf("%3d", &euro_value);
+        if (euro_value <= 0 | euro_value > 500)
         {
             error(404);
             delay(2000);
-            return Toman(dollar, erue, toman);
+            return Toman(dollar, euro, toman);
         }
         else if (toman < 0)
         {
             error(405);
             delay(2000);
-            return Toman(dollar, erue, toman);
+            return Toman(dollar, euro, toman);
         }
-        else if (erue_value > check_t_2)
+        else if (euro_value > check_t_2)
         {
             error(500);
             delay(2000);
-            return Toman(dollar, erue, toman);
+            return Toman(dollar, euro, toman);
         }
-        erue = erue + erue_value;
-        erue_value = erue_value * erue_point;
-        toman = toman - erue_value;
-        printf(BGRN "convert success\n" reset);
+        euro = euro + euro_value;
+        euro_value = euro_value * euro_point;
+        toman = toman - euro_value;
+        printf(BGRN "convert was successfully\n" reset);
         fflush(stdout);
         delay(2000);
         // printf(GRN "your dollar is %d\n", dollar);
-        // printf("your erue is %d\n", erue);
+        // printf("your euro is %d\n", euro);
         // printf("your tomsn is %d\n" reset, toman);
     }
     else
     {
-        exit(0);
+        bye(dollar, euro, toman);
     }
-    return Toman(dollar, erue, toman);
+    f_dollar = dollar;
+    f_euro = euro;
+    f_toman = toman;
+    return Toman(dollar, euro, toman);
 }
-int Dollar(int dollar, int erue, int toman)
+int Dollar(int dollar, int euro, int toman)
 {
     int option2;
     int toman_value;
-    int erue_value;
+    int euro_value;
     int toman_point = 50;
-    float erue_point = 1.079;
+    float euro_point = 1.079;
     int check_d_1 = toman_point * dollar;
-    int check_d_2 = erue_point * dollar;
-    system("clear");
+    int check_d_2 = euro_point * dollar;
+    // bool ask = true;
+    // bool ans = false;
     // delay(2000);
+    system("clear");
     if (dollar <= 0)
     {
         error(402);
-        return shop(dollar, erue, toman);
+        delay(2000);
+        return shop(dollar, euro, toman);
     }
     printf(GRN "your dollar is %d\n", dollar);
-    printf("your erue is %d\n", erue);
+    printf("your euro is %d\n", euro);
     printf("your toman is %d\n" reset, toman);
-    printf(BYEL "\n          <<<<<<<the conversions for dollar>>>>>>> :\n");
+    printf(BYEL "\n          <<<<<<<Dollar>>>>>>> :\n");
     fflush(stdout);
     printf("(1)dollar to euro\n");
     printf("(2)dollar to toman\n");
@@ -297,36 +319,36 @@ int Dollar(int dollar, int erue, int toman)
     scanf("%2d", &option2);
     if (option2 == 3)
     {
-        return shop(dollar, erue, toman);
+        return shop(dollar, euro, toman);
     }
     else if (option2 == 1)
     {
-        printf(CYN "ok %d dollar is once erue\n", erue_point);
-        printf("enter your erue to want : " reset);
+        printf(CYN "ok %d dollar is once euro\n", euro_point);
+        printf("enter your euro to want : " reset);
         fflush(stdout);
-        scanf("%3d", &erue_value);
-        if (erue_value <= 0 | erue_value > 500)
+        scanf("%3d", &euro_value);
+        if (euro_value <= 0 | euro_value > 500)
         {
             error(404);
             delay(2000);
-            return Dollar(dollar, erue, toman);
+            return Dollar(dollar, euro, toman);
         }
         else if (dollar < 0)
         {
             error(407);
             delay(2000);
-            return Dollar(dollar, erue, toman);
+            return Dollar(dollar, euro, toman);
         }
-        else if (erue_value > check_d_2)
+        else if (euro_value > check_d_2)
         {
             error(500);
             delay(2000);
-            return Dollar(dollar, erue, toman);
+            return Dollar(dollar, euro, toman);
         }
-        erue = erue + erue_value;
-        erue_value = erue_value * erue_point;
-        dollar = dollar - erue_value;
-        printf(BGRN "convert success\n" reset);
+        euro = euro + euro_value;
+        euro_value = euro_value * euro_point;
+        dollar = dollar - euro_value;
+        printf(BGRN "convert was successfully\n" reset);
         fflush(stdout);
         delay(2000);
     }
@@ -340,66 +362,70 @@ int Dollar(int dollar, int erue, int toman)
         {
             error(404);
             delay(2000);
-            return Dollar(dollar, erue, toman);
+            return Dollar(dollar, euro, toman);
         }
         else if (dollar < 0)
         {
             error(407);
             delay(2000);
-            return Dollar(dollar, erue, toman);
+            return Dollar(dollar, euro, toman);
         }
         else if (toman_value > check_d_1)
         {
             error(500);
             delay(2000);
-            return Dollar(dollar, erue, toman);
+            return Dollar(dollar, euro, toman);
         }
         toman = toman + toman_value;
         toman_value = toman_value / toman_point;
         dollar = dollar - toman_value;
-        printf(BGRN "convert success\n" reset);
+        printf(BGRN "convert was successfully\n" reset);
         fflush(stdout);
         delay(2000);
     }
     else
     {
-        exit(0);
+        bye(dollar, euro, toman);
     }
-    return Dollar(dollar, erue, toman);
+    f_dollar = dollar;
+    f_euro = euro;
+    f_toman = toman;
+    return Dollar(dollar, euro, toman);
 }
-int Erue(int dollar, int erue, int toman)
+int Euro(int dollar, int euro, int toman)
 {
     int option4;
     int toman_value;
     int dollar_value;
     int toman_point = 60;
     float dollar_point = 1.9;
-    int check_e_1 = toman_point * erue;
-    int check_e_2 = dollar_point * erue;
+    int check_e_1 = toman_point * euro;
+    int check_e_2 = dollar_point * euro;
     system("clear");
     // delay(2000);
-    if (erue <= 0)
+    if (euro <= 0)
     {
         error(409);
-        return shop(dollar, erue, toman);
+        delay(2000);
+        return shop(dollar, euro, toman);
     }
     printf(GRN "your dollar is %d\n", dollar);
-    printf("your erue is %d\n", erue);
+    printf("your euro is %d\n", euro);
     printf("your tomsn is %d\n" reset, toman);
-    printf(BYEL "\n          <<<<<<<the conversions for erue>>>>>>> :\n");
+    printf(BYEL "\n          <<<<<<<Euro>>>>>>> :\n");
     fflush(stdout);
-    printf("(1)erue to toman\n");
-    printf("(2)erue to dollar\n");
+    printf("(1)euro to toman\n");
+    printf("(2)euro to dollar\n");
     printf("(3)go back\n" reset);
     fflush(stdout);
     scanf("%2d", &option4);
     if (option4 == 3)
     {
-        return shop(dollar, erue, toman);
+        return shop(dollar, euro, toman);
     }
     else if (option4 == 1)
     {
-        printf(CYN "ok %d is once erue\n", toman_point);
+        printf(CYN "ok %d is once euro\n", toman_point);
         printf("enter your toman to want : " reset);
         fflush(stdout);
         scanf("%3d", &toman_value);
@@ -407,72 +433,72 @@ int Erue(int dollar, int erue, int toman)
         {
             error(404);
             delay(2000);
-            return Erue(dollar, erue, toman);
+            return Euro(dollar, euro, toman);
         }
-        else if (erue < 0)
+        else if (euro < 0)
         {
             error(408);
             delay(2000);
-            return Erue(dollar, erue, toman);
+            return Euro(dollar, euro, toman);
         }
         else if (toman_value > check_e_1)
         {
             error(500);
             delay(2000);
-            return Erue(dollar, erue, toman);
+            return Euro(dollar, euro, toman);
         }
         toman = toman + toman_value;
         toman_value = toman_value / toman_point;
-        erue = erue - toman_value;
-        printf(BGRN "convert success\n" reset);
+        euro = euro - toman_value;
+        printf(BGRN "convert was successfully\n" reset);
         fflush(stdout);
         delay(2000);
     }
     else if (option4 == 2)
     {
-        printf(CYN "ok %d erue is once dollar\n", dollar_point);
-        printf("enter your erue to want : " reset);
+        printf(CYN "ok %d euro is once dollar\n", dollar_point);
+        printf("enter your euro to want : " reset);
         fflush(stdout);
-        scanf("%3d", &dollar_value);
+        scanf("%d", &dollar_value);
         if (dollar_value <= 0 | dollar_value > 500)
         {
             error(404);
             delay(2000);
-            return Erue(dollar, erue, toman);
+            return Euro(dollar, euro, toman);
         }
         else if (dollar < 0)
         {
             error(408);
             delay(2000);
-            return Erue(dollar, erue, toman);
+            return Euro(dollar, euro, toman);
         }
         else if (dollar_value > check_e_2)
         {
             error(500);
             delay(2000);
-            return Erue(dollar, erue, toman);
+            return Euro(dollar, euro, toman);
         }
         dollar = dollar + dollar_value;
         dollar_value = dollar_value * dollar_point;
-        erue = erue - dollar_value;
-        printf(BGRN "convert success\n" reset);
+        euro = euro - dollar_value;
+        printf(BGRN "convert was successfully\n" reset);
         fflush(stdout);
         delay(2000);
     }
     else
     {
-        exit(0);
+        bye(dollar, euro, toman);
     }
-    return Erue(dollar, erue, toman);
+    f_dollar = dollar;
+    f_euro = euro;
+    f_toman = toman;
+    return Euro(dollar, euro, toman);
 }
 
 void warning()
 {
 }
 void member()
-{
-}
-void admin()
 {
 }
 void delay(int number_of_seconds)
@@ -489,6 +515,7 @@ void delay(int number_of_seconds)
 }
 int error(int error_number)
 {
+    char y_n[20];
     if (error_number == 400)
     {
         printf(REDB "ERROR: you are bot?\n");
@@ -542,13 +569,13 @@ int error(int error_number)
     }
     else if (error_number == 408)
     {
-        printf(REDB "ERROR: erue is very low" reset);
+        printf(REDB "ERROR: euro is very low" reset);
         printf("\n");
         fflush(stdout);
     }
     else if (error_number == 409)
     {
-        printf(REDB "ERROR: you dont have any erue please first buy erue" reset);
+        printf(REDB "ERROR: you dont have any euro please first buy euro" reset);
         printf("\n");
         fflush(stdout);
     }
@@ -570,4 +597,96 @@ int error(int error_number)
         printf("\n");
         fflush(stdout);
     }
+    else if (error_number == 503)
+    {
+        printf(REDB "ERROR: README file not found" reset);
+        printf("\n");
+        fflush(stdout);
+    }
+}
+void welcome()
+{
+    printf(BBLU "Hello and welcome to the exchange\n\n");
+    printf("thank you for using\n");
+    system("date");
+    printf("\e[1;31m[\e[1;32m*\e[1;31m]\e[1;32m for report the bugs select ");
+    printf(UCYN "(3)" reset);
+    fflush(stdout);
+    printf(reset "\n");
+    fflush(stdout);
+}
+void handle(int signo)
+{
+
+    char check[3];
+    if (signo == SIGQUIT)
+    {
+        printf(BRED "Are you sure to exit program(y or n)\n" reset);
+        fflush(stdout);
+        fgets(check, 1, stdin);
+        if (check == "y")
+        {
+            bye(f_dollar, f_euro, f_toman);
+        }
+        else
+        {
+            printf(BWHT "ok" reset);
+        }
+    }
+    else if (signo == SIGINT)
+    {
+        printf(BRED "Are you sure to exit program (y or n)\n" reset);
+        fflush(stdout);
+        fgets(check, 1, stdin);
+        if (check == "y")
+        {
+            bye(f_dollar, f_euro, f_toman);
+        }
+        else
+        {
+            printf(BWHT "ok" reset);
+        }
+    }
+    else if (signo == SIGTSTP)
+    {
+        printf(BRED "Are you sure to exit program (y or n)\n" reset);
+        fflush(stdout);
+        fgets(check, 1, stdin);
+        if (check == "y")
+        {
+            bye(f_dollar, f_euro, f_toman);
+        }
+        else
+        {
+            printf(BWHT "ok" reset);
+        }
+    }
+    else if (signo == SIGTERM)
+    {
+        printf(BRED "Are you sure to exit program (y or n)\n" reset);
+        fflush(stdout);
+        fgets(check, 1, stdin);
+        if (check == "y")
+        {
+            bye(f_dollar, f_euro, f_toman);
+        }
+        else
+        {
+            printf(BWHT "ok" reset);
+        }
+    }
+}
+void bye(int dollar, int euro, int toman)
+{
+    FILE *output;
+    output = fopen("outputs.txt", "a-w-r");
+    fprintf(output, "username :%s{\n", username);
+    fprintf(output, "\tDollars is %d\n", dollar);
+    fprintf(output, "\teuro is %d\n", euro);
+    fprintf(output, "\ttoman is %d\n", toman);
+    fprintf(output, "}\n\n");
+    fclose(output);
+    printf(BCYN "Good bye\n");
+    fflush(stdout);
+    exit(0);
 }
